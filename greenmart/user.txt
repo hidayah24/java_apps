@@ -1,0 +1,32 @@
++-------------------+
+Admin
++-------------------+
+username: admin
+password: admin
++-------------------+
+
++-------------------+
+Seller
++-------------------+
+username: adin
+password: adin
+
+username: rindi
+password: rindi
+
+username: jack
+password: jack
++-------------------+
+
++-------------------+
+Customer
++-------------------+
+username: taufik
+password: 1234
+
+username: paldi
+password: 1234
+
+username: abdul
+password: abdul
++-------------------+
