@@ -23,8 +23,26 @@ import org.opencv.imgproc.Imgproc;
  */
 public class main extends javax.swing.JFrame {
      private Dimension screensize;
-    public void erosi() {
-        
+    public void dilatasi() {
+        try{	
+         System.loadLibrary( Core.NATIVE_LIBRARY_NAME );
+         String file ="src\\gambar\\exterior.jpg";
+         Mat src = Imgcodecs.imread(file);
+         Mat destination = new Mat(src.rows(),src.cols(),src.type());
+         destination = src;
+         int dilation_size = 5;
+         Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new  Size(2*dilation_size + 1, 2*dilation_size+1));
+         Imgproc.dilate(src, destination, element);
+         Image img = HighGui.toBufferedImage(src);
+         // BufferedImage to ImageIcon
+         ImageIcon imageIcon = new ImageIcon(img);
+         gambar.setIcon(imageIcon);
+         
+      } catch (Exception e) {
+         System.out.println("error:" + e.getMessage());
+      } 
+    }
+    public void erosi() {  
       try{	
          System.loadLibrary( Core.NATIVE_LIBRARY_NAME );
          String file ="src\\gambar\\exterior.jpg";
@@ -246,7 +264,11 @@ public class main extends javax.swing.JFrame {
     }//GEN-LAST:event_jToggleButton1ActionPerformed
 
     private void DilatasiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DilatasiActionPerformed
-        
+        if (Dilatasi.isSelected()) {
+            dilatasi();
+        } else {
+            gambar.setIcon(new ImageIcon("src\\gambar\\exterior.jpg"));
+        }        
         
     }//GEN-LAST:event_DilatasiActionPerformed
 
