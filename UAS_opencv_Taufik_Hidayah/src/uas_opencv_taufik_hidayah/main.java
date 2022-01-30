@@ -8,9 +8,15 @@ package uas_opencv_taufik_hidayah;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.Image;
+import java.util.List;
+import java.util.ArrayList;
 import javax.swing.ImageIcon;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.highgui.HighGui;
@@ -23,6 +29,94 @@ import org.opencv.imgproc.Imgproc;
  */
 public class main extends javax.swing.JFrame {
      private Dimension screensize;
+    private static Mat doCanny(Mat frame) {
+        double threshold = 0;
+        // init
+        Mat grayImage = new Mat();
+        Mat detectedEdges = new Mat();
+
+        // convert to grayscale
+        Imgproc.cvtColor(frame, grayImage, Imgproc.COLOR_BGR2GRAY);
+
+        // reduce noise with a 3x3 kernel
+        Imgproc.blur(grayImage, detectedEdges, new Size(3, 3));
+
+        // canny detector, with ratio of lower:upper threshold of 3:1
+       Imgproc.Canny(detectedEdges, detectedEdges, threshold, threshold * 3, 3, false);
+
+        // using Canny's output as a mask, display the result
+        Mat dest = new Mat();
+        Core.add(dest, Scalar.all(0), dest);
+        frame.copyTo(dest, detectedEdges);
+
+        return dest;
+    }
+    private static double getHistAverage(Mat hsvImg, Mat hueValues) {
+            // init
+            double average = 0.0;
+            Mat hist_hue = new Mat();
+            MatOfInt histSize = new MatOfInt(180);
+            List<Mat> hue = new ArrayList<>();
+            hue.add(hueValues);
+
+            // compute the histogram
+            Imgproc.calcHist(hue, new MatOfInt(0), new Mat(), hist_hue, histSize, new MatOfFloat(0, 179));
+
+            // get the average for each bin
+            for (int h = 0; h < 180; h++)
+            {
+                    average += (hist_hue.get(h, 0)[0] * h);
+            }
+
+            return average = average / hsvImg.size().height / hsvImg.size().width;
+    }
+    private static Mat doBackgroundRemoval(Mat frame) {
+
+         // init
+        Mat hsvImg = new Mat();
+        List<Mat> hsvPlanes = new ArrayList<>();
+        Mat thresholdImg = new Mat();
+
+        // threshold the image with the histogram average value
+        hsvImg.create(frame.size(), CvType.CV_8U);
+        Imgproc.cvtColor(frame, hsvImg, Imgproc.COLOR_BGR2HSV);
+        Core.split(hsvImg, hsvPlanes);
+
+        double threshValue = getHistAverage(hsvImg, hsvPlanes.get(0));
+
+        
+        Imgproc.threshold(hsvPlanes.get(0), thresholdImg, threshValue, 179.0, Imgproc.THRESH_BINARY_INV);
+   
+       // Imgproc.threshold(hsvPlanes.get(0), thresholdImg, threshValue, 179.0, Imgproc.THRESH_BINARY);
+
+        Imgproc.blur(thresholdImg, thresholdImg, new Size(5, 5));
+
+        // dilate to fill gaps, erode to smooth edges
+        Imgproc.dilate(thresholdImg, thresholdImg, new Mat(), new Point(-1, 1), 6);
+        Imgproc.erode(thresholdImg, thresholdImg, new Mat(), new Point(-1, 1), 6);
+
+        Imgproc.threshold(thresholdImg, thresholdImg, threshValue, 179.0, Imgproc.THRESH_BINARY);
+
+        // create the new image
+        Mat foreground = new Mat(frame.size(), CvType.CV_8UC3, new Scalar(255, 255, 255));
+        frame.copyTo(foreground, thresholdImg);
+
+        return foreground;
+    }
+    public void bg_eraser() {
+        // Loading the OpenCV core library
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        // Reading the Image from the file and storing it in to a Matrix object
+        String file = "src\\gambar\\exterior.jpg";
+        Mat man = Imgcodecs.imread(file);
+        man = doCanny(man);
+        man = doBackgroundRemoval(man);
+        Image img = HighGui.toBufferedImage(man);
+         // BufferedImage to ImageIcon
+        ImageIcon imageIcon = new ImageIcon(img);
+        gambar.setIcon(imageIcon);
+        
+    }
     public void dilatasi() {
         try{	
          System.loadLibrary( Core.NATIVE_LIBRARY_NAME );
@@ -274,6 +368,11 @@ public class main extends javax.swing.JFrame {
 
     private void jToggleButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton4ActionPerformed
         // TODO add your handling code here:
+        if (jToggleButton4.isSelected()) {
+            bg_eraser();
+        } else {
+            gambar.setIcon(new ImageIcon("src\\gambar\\exterior.jpg"));
+        }  
     }//GEN-LAST:event_jToggleButton4ActionPerformed
 
     private void jToggleButton1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jToggleButton1StateChanged
